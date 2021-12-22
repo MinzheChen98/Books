@@ -20,8 +20,9 @@ create table users (
      user_id int unsigned NOT NULL primary key, 
      user_name varchar(32) NOT NULL,
      admin decimal(1) NOT NULL,
-     password varchar(128) NOT NULL
+     password varchar(128) NOT NULL,
      -- Additional Constraints
+     UNIQUE (user_name)
 );
 
 
@@ -100,3 +101,25 @@ load data infile '/var/lib/mysql-files/ratings.csv' ignore into table ratings
      ignore 1 lines;
 alter table ratings add constraint FK_rating_user_id foreign key(user_id) REFERENCES users(user_id);
 alter table ratings add constraint FK_rating_book_id foreign key(book_id) REFERENCES books(book_id);
+
+
+alter table ratings add COLUMN comment varchar(64);
+alter table users add COLUMN group_id int unsigned;
+alter table users add COLUMN contact varchar(64);
+alter table users add constraint FK_user_org_id foreign key (group_id) REFERENCES orgs(group_id);
+
+
+create table notes(
+    user_id int unsigned NOT NULL,
+    book_id int unsigned NOT NULL,
+    note_number int unsigned NOT NULL,
+    note varchar(64),
+    constraint PK_note primary key (user_id, book_id, note_number),
+    constraint FK_note foreign key (user_id, book_id) REFERENCES to_read(user_id, book_id)
+);
+
+create table orgs(
+    group_id int unsigned NOT NULL primary key,
+    group_name varchar(64) not null,
+    UNIQUE (group_name)
+);
