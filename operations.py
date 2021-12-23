@@ -22,7 +22,6 @@ def show_data(data,fields):
 def display(table: str, fields, query=""):
     f = ', '.join(fields)
     q = 'select {} from {} {};'.format(f, table, query)
-    print(q)
     data = CLIENT.select(q)
     show_data(data, fields)
     return data
@@ -39,7 +38,6 @@ def search(user_id):
     options = {
         '-name $book_name': "Exact name of the book.",
         '-authors $authors_name': 'Authors names of the book.',
-        '-nc $book_name': "Name contains.",
         '-tag $tab_name': 'Tag name.',
         '-read T': 'Books you are reading.' ,
         '-read F': 'Books you are not reading.',
@@ -97,7 +95,7 @@ def rate(user_id):
     if CLIENT.select(query):
         print('You have rated this book')
         return
-    rating = input("Please enter your rating (0-10): ")
+    rating = input("Please enter your rating (0-5): ")
     comment = input("Please enter your comment: ")
     fields = 'user_id, book_id, rating, comment'
     values = "{}, {}, {}, '{}'".format(user_id, book_id, rating, comment)
@@ -118,6 +116,7 @@ def create_user(user_id):
         CLIENT.insert('users', fields, values)
     except:
         print('Username already exists.')
+    return user_id
 
 
 def create_group(user_id):
@@ -163,10 +162,31 @@ def login() -> int:
         password = input('Password: ')
         query = "select password, user_id from users where user_name = '{}'".format(username)
         data = CLIENT.select(query)
-        print(data)
         if not data:
             print('Username does not exist, please try again.\n')
         elif data[0][0] != password:
             print('Incorrect password, please try again.\n')
         else:
             return data[0][1]
+
+def recommand(user_id):
+    query = 'select tag_id from book_tags where goodreads_book_id in (select books.goodreads_book_id from books, to_read where to_read.user_id = {} and to_read.book_id = books.book_id);'.format(user_id)
+    user_tags = CLIENT.select(query)
+    fields = ', '.join(BOOK_FIELD)
+    query = 'select goodreads_book_id from books where book_id not in (select book_id from to_read where user_id = {}) order by average_rating desc limit 50'.format(user_id, fields)
+    books = CLIENT.select(query)
+    RECOMMAND_NUM = 3
+    max_dis = [0 for i in range(RECOMMAND_NUM)]
+    goodreads_book_id = [1 for i in range(RECOMMAND_NUM)]
+    for book in books:
+        query = 'select tag_id from book_tags where goodreads_book_id = {}'.format(book[0])
+        tags = CLIENT.select(query)
+        distance = len(set(tags) & set(user_tags))
+        i = max_dis.index(min(max_dis))
+        if max_dis[i] < distance:
+            max_dis[i] = distance
+            goodreads_book_id[i] = str(book[0])
+    goodreads_book_ids = ', '.join(goodreads_book_id)
+    query = 'select {} from books where goodreads_book_id in ({})'.format(fields, goodreads_book_ids)
+    data = CLIENT.select(query)
+    show_data(data, BOOK_FIELD)
