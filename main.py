@@ -2,7 +2,16 @@ import operations
 
 
 def main():
-    user_id = operations.login()
+    print('Please choose an option:')
+    login_opt = {
+        'login': 'Login with username and password.',
+        'register': 'Create a user.',
+    }
+    operations.show_options(login_opt)
+    if input() == 'register':
+        user_id = operations.create_user(1)
+    else:
+        user_id = operations.login()
     while True:
         print("\nWelcome to book reading system.")
         print('Please choose options:')
@@ -19,14 +28,17 @@ def main():
             'read': 'Start reading a book',
             'rate': 'Rate a book',
             'note': 'Take notes while reading a book.',
+            'recommand': 'The system recommands a book for you.',
             'quit': 'Quit.'
         }
         operations.show_options(options)
         opt = input()
         if opt == 'quit':
-            break
+            return
         while opt not in options and opt not in admin_opt:
             opt = operations.try_again()
+            if opt == 'quit':
+                return
         try:
             getattr(operations, opt)(user_id)
         except Exception as e:
@@ -34,7 +46,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # query = 'select tag_name from tags where tag_id =2124;'
-    # data = CLIENT.select(query)[0]
-    # print(data)
     main()
