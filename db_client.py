@@ -26,7 +26,6 @@ class DbClient:
         
     def update(self, table: str, query: str, fields: str, values: str) -> None:
         query = "UPDATE {} set {} = {} where {};".format(table, fields, values, query)
-        print(query)
         self.cursor.execute(query)
         self.db.commit()
         print('updated')
